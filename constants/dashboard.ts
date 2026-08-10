@@ -14,20 +14,19 @@ import type {
 
 export const sidebarItems: SidebarItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: "⌂" },
-  { label: "My Subscriptions", href: "/subscriptions", icon: "🩺" },
-  { label: "Order History", href: "/orders", icon: "📦" },
-  { label: "Payments", href: "/payments", icon: "💳" },
-  { label: "Notifications", href: "/notifications", icon: "🔔" },
-  { label: "Profile", href: "/profile", icon: "👤" },
-  { label: "Settings", href: "/settings", icon: "⚙️" },
+  { label: "Medicines", href: "/dashboard/medicines", icon: "💊" },
+  { label: "My Subscriptions & Refills", href: "/dashboard/subscriptions", icon: "🩺" },
+  { label: "Orders", href: "/dashboard/orders", icon: "📦" },
+  { label: "Payments", href: "/dashboard/payments", icon: "💳" },
+  { label: "Notifications", href: "/dashboard/notifications", icon: "🔔" },
+  { label: "Profile", href: "/dashboard/profile", icon: "👤" },
+  { label: "Settings", href: "/dashboard/settings", icon: "⚙️" },
 ];
 
 export const stats: StatItem[] = [
   {
     title: "Active Subscriptions",
     value: "4",
-    actionLabel: "View all",
-    actionHref: "/subscriptions",
     icon: "💊",
     tone: "green",
     status: "+1 this week",
@@ -35,8 +34,6 @@ export const stats: StatItem[] = [
   {
     title: "Upcoming Delivery",
     value: "3",
-    actionLabel: "View deliveries",
-    actionHref: "/orders",
     icon: "📦",
     tone: "violet",
     status: "2 today",
@@ -44,13 +41,12 @@ export const stats: StatItem[] = [
   {
     title: "Total Orders",
     value: "18",
-    actionLabel: "View order history",
-    actionHref: "/orders",
     icon: "🧾",
     tone: "amber",
     status: "98% fulfilled",
   },
 ];
+
 
 export const upcomingDeliveries: DeliveryItem[] = [
   {
@@ -184,7 +180,7 @@ export const popularCategories: CategoryItem[] = [
   {
     name: "Diabetes Care",
     description: "Personalized glucose support",
-    accent: "from-emerald-500 to-lime-400",
+    accent: "from-[#00b386] to-lime-400",
     href: "/categories/diabetes-care",
   },
   {
@@ -244,7 +240,7 @@ export const popularCategories: CategoryItem[] = [
   {
     name: "Ayurvedic Products",
     description: "Natural remedies",
-    accent: "from-green-600 to-emerald-500",
+    accent: "from-[#009e76] to-[#00b386]",
     href: "/categories/ayurvedic",
   },
   {
@@ -290,9 +286,9 @@ export const notifications: NotificationItem[] = [
 ];
 
 export const moneySavedSummary: MoneySavedSummary = {
-  amount: "₹1,450",
-  comparison: "Compared to one-time purchases",
-  percentage: "18%",
+  amount: "Coming Soon",
+  comparison: "Savings will appear once pricing comparison data becomes available.",
+  percentage: "N/A",
 };
 
 export const todayReminder: ReminderInfo = {

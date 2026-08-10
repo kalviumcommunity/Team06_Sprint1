@@ -25,6 +25,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(initialTheme);
+
+    // Listen for cross-tab theme changes
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "theme" && (e.newValue === "dark" || e.newValue === "light")) {
+        setTheme(e.newValue);
+        if (e.newValue === "dark") {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+      }
+    };
+    
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   const toggleTheme = () => {

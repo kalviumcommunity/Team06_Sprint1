@@ -12,7 +12,7 @@ export function CategoryPills({ items }: CategoryPillsProps) {
           <button
             key={pill.name}
             type="button"
-            className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+            className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[#00b386] hover:bg-[#e6f7f3] hover:text-[#00b386] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
           >
             {pill.name}
           </button>

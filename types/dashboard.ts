@@ -7,8 +7,8 @@ export interface SidebarItem {
 export interface StatItem {
   title: string;
   value: string;
-  actionLabel: string;
-  actionHref: string;
+  actionLabel?: string;
+  actionHref?: string;
   icon: string;
   tone?: "green" | "violet" | "amber" | "slate";
   status?: string;

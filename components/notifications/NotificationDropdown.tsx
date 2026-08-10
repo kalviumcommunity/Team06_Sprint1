@@ -32,7 +32,7 @@ export function NotificationDropdown({ items }: NotificationDropdownProps) {
         type="button"
         aria-label="Notifications"
         onClick={() => setOpen((prev) => !prev)}
-        className="relative flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-emerald-300 hover:text-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+        className="relative flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-[#00b386] hover:text-[#00b386] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
       >
         🔔
         {unreadCount > 0 ? (
@@ -44,7 +44,7 @@ export function NotificationDropdown({ items }: NotificationDropdownProps) {
         <div className="absolute right-0 mt-3 w-80 rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-emerald-600">Inbox</p>
+              <p className="text-sm font-medium text-[#00b386]">Inbox</p>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Latest Notifications</h3>
             </div>
             <Button variant="ghost" size="sm" onClick={() => setNotifications((prev) => prev.map((item) => ({ ...item, unread: false }))) }>
@@ -60,7 +60,7 @@ export function NotificationDropdown({ items }: NotificationDropdownProps) {
                     <p className="font-semibold text-slate-900 dark:text-white">{item.title}</p>
                     <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{item.message}</p>
                   </div>
-                  {item.unread ? <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> : null}
+                  {item.unread ? <span className="h-2.5 w-2.5 rounded-full bg-[#00b386]" /> : null}
                 </div>
                 <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{item.time}</p>
               </div>

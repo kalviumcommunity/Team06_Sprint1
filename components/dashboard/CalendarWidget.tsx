@@ -1,48 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
 
 interface CalendarWidgetProps {
   highlightDates?: string[];
+  year?: number;
+  month?: number;
 }
 
 const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const monthNames = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
 
-export function CalendarWidget({ highlightDates = ["10", "13", "17", "18"] }: CalendarWidgetProps) {
-  const [calendarDays] = useState<number[]>(() => {
-    // Hardcode to July 2026 as shown in reference
-    const year = 2026;
-    const month = 6; // July (0-indexed)
-    
-    // Get first day of month and total days
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    
-    // Build calendar array with empty slots for days before month starts
+export function CalendarWidget({ highlightDates = [], year, month }: CalendarWidgetProps) {
+  const now = new Date();
+  const currentYear = year ?? now.getFullYear();
+  const currentMonth = month ?? now.getMonth();
+  const today = (currentYear === now.getFullYear() && currentMonth === now.getMonth()) ? now.getDate() : -1;
+
+  const calendarDays = useMemo(() => {
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
     const initialDays: number[] = [];
     for (let i = 0; i < firstDay; i++) {
-      initialDays.push(0); // Empty slot
+      initialDays.push(0);
     }
     for (let i = 1; i <= daysInMonth; i++) {
       initialDays.push(i);
     }
     return initialDays;
-  });
-
-  const today = 17; // Current day in reference
-  const currentMonth = 6; // July
-  const currentYear = 2026;
+  }, [currentYear, currentMonth]);
 
   return (
     <section className="rounded-3xl border border-slate-200/80 bg-white py-4 px-5 shadow-[0_10px_40px_-20px_rgba(15,23,42,0.35)] dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-emerald-600">Delivery Calendar</p>
-          <h3 className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">{monthNames[currentMonth]} {currentYear}</h3>
+          <p className="text-sm font-medium text-[#00b386]">Delivery Calendar</p>
+          <h3 className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">
+            {monthNames[currentMonth]} {currentYear}
+          </h3>
         </div>
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          <span className="h-2 w-2 rounded-full bg-[#00b386]" />
           <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Upcoming delivery</span>
         </div>
       </div>
@@ -67,9 +69,9 @@ export function CalendarWidget({ highlightDates = ["10", "13", "17", "18"] }: Ca
               key={index}
               className={`flex h-8 items-center justify-center rounded-full text-sm font-medium ${
                 isToday
-                  ? "bg-[#DDF8E8] text-emerald-700"
+                  ? "bg-[#e6f7f3] text-[#00b386]"
                   : isHighlighted
-                    ? "bg-[#0F9D73] text-white"
+                    ? "bg-[#00b386] text-white"
                     : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-800/70 dark:text-slate-300"
               }`}
             >

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
-import { Order, OrderDetailsModalProps } from '@/lib/types/order';
+import { OrderDetailsModalProps } from '@/lib/types/order';
 import StatusBadge from './StatusBadge';
 import OrderItemsCard from './OrderItemsCard';
 import TrackingTimeline from './TrackingTimeline';
@@ -18,7 +18,6 @@ export default function OrderDetailsModal({
 }: OrderDetailsModalProps) {
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Prevent background scrolling when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -31,7 +30,6 @@ export default function OrderDetailsModal({
     };
   }, [isOpen]);
 
-  // Handle Escape key
   useEffect(() => {
     const handleEscapeKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -50,18 +48,26 @@ export default function OrderDetailsModal({
 
   if (!isOpen) return null;
 
+  const displayDate = order?.orderDate
+    ? new Date(order.orderDate).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      })
+    : order?.date || '';
+
+  const trackingNum = order?.tracking?.trackingNumber || order?.trackingId || `TRK-${order?.orderNumber || order?.id}`;
+  const trackingSteps = order?.tracking?.steps;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200"
         onClick={onClose}
       />
 
-      {/* Modal */}
       <div className="relative z-10 w-full max-w-2xl animate-in fade-in zoom-in-95 duration-200">
         <div className="mx-4 max-h-[90vh] overflow-y-auto rounded-xl bg-white shadow-2xl">
-          {/* Header */}
           <div className="sticky top-0 z-20 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-5">
             <h2 className="text-2xl font-bold text-gray-900">Order Details</h2>
             <button
@@ -73,9 +79,7 @@ export default function OrderDetailsModal({
             </button>
           </div>
 
-          {/* Content */}
           <div className="px-6 py-6">
-            {/* Loading State */}
             {isLoading && (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-green-500" />
@@ -83,7 +87,6 @@ export default function OrderDetailsModal({
               </div>
             )}
 
-            {/* Error State */}
             {error && !isLoading && (
               <div className="rounded-lg border border-red-200 bg-red-50 p-6">
                 <p className="mb-4 text-center text-red-700">{error}</p>
@@ -98,35 +101,24 @@ export default function OrderDetailsModal({
               </div>
             )}
 
-            {/* Order Data */}
             {!isLoading && !error && order && (
               <div className="space-y-6">
-                {/* Order Info Section */}
                 <div className="border-b border-gray-200 pb-6">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    {/* Order Number */}
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                         Order Number
                       </p>
-                      <p className="mt-1 text-lg font-semibold text-gray-900">{order.orderNumber}</p>
+                      <p className="mt-1 text-lg font-semibold text-gray-900">{order.orderNumber || order.id}</p>
                     </div>
 
-                    {/* Order Date */}
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                         Date
                       </p>
-                      <p className="mt-1 text-lg font-semibold text-gray-900">
-                        {new Date(order.orderDate).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </p>
+                      <p className="mt-1 text-lg font-semibold text-gray-900">{displayDate}</p>
                     </div>
 
-                    {/* Status */}
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                         Status
@@ -138,24 +130,20 @@ export default function OrderDetailsModal({
                   </div>
                 </div>
 
-                {/* Items Card */}
-                <OrderItemsCard items={order.items} totalAmount={order.totalAmount} />
+                <OrderItemsCard items={order.items || []} totalAmount={order.totalAmount || order.price || 0} />
 
-                {/* Tracking Timeline */}
                 <TrackingTimeline
-                  trackingNumber={order.tracking.trackingNumber}
+                  trackingNumber={trackingNum}
                   currentStatus={order.status}
-                  steps={order.tracking.steps}
+                  steps={trackingSteps}
                 />
 
-                {/* Download Invoice Button */}
                 <DownloadInvoiceButton
                   orderId={order.id}
                   isLoading={isDownloading}
                   onClick={async (orderId) => {
                     setIsDownloading(true);
                     try {
-                      // Backend integration point
                       await handleDownloadInvoice(orderId);
                     } finally {
                       setIsDownloading(false);
@@ -171,30 +159,23 @@ export default function OrderDetailsModal({
   );
 }
 
-/**
- * Backend integration function for downloading invoice
- * This will be implemented to connect with Next.js API route
- * @param orderId - The order ID to generate invoice for
- */
 async function handleDownloadInvoice(orderId: string): Promise<void> {
   try {
-    // TODO: Replace with actual API endpoint
-    // const response = await fetch(`/api/orders/${orderId}/invoice`, {
-    //   method: 'GET',
-    // });
-    // const blob = await response.blob();
-    // const url = window.URL.createObjectURL(blob);
-    // const a = document.createElement('a');
-    // a.href = url;
-    // a.download = `invoice-${orderId}.pdf`;
-    // document.body.appendChild(a);
-    // a.click();
-    // window.URL.revokeObjectURL(url);
-    // document.body.removeChild(a);
+    const response = await fetch(`/api/orders/${orderId}/invoice`, {
+      method: 'GET',
+    });
 
-    console.log('Download invoice for order:', orderId);
-    // Placeholder for development
-    alert(`Invoice download initiated for order: ${orderId}`);
+    if (!response.ok) throw new Error('Failed to download invoice');
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `invoice-${orderId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
   } catch (error) {
     console.error('Failed to download invoice:', error);
     alert('Failed to download invoice. Please try again.');

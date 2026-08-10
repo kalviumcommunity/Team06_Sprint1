@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   FiBell,
   FiCreditCard,
@@ -13,17 +15,19 @@ import {
 } from "react-icons/fi";
 
 const navigationItems = [
-  { label: "Dashboard", icon: FiHome, active: false },
-  { label: "Medicines", icon: FiPackage, active: false },
-  { label: "Subscriptions", icon: FiRepeat, active: false },
-  { label: "Orders", icon: FiShoppingBag, active: true },
-  { label: "Payments", icon: FiCreditCard, active: false },
-  { label: "Notifications", icon: FiBell, active: false, badge: 3 },
-  { label: "Profile", icon: FiUser, active: false },
-  { label: "Settings", icon: FiSettings, active: false },
+  { label: "Dashboard", icon: FiHome, href: "/" },
+  { label: "Orders", icon: FiShoppingBag, href: "/orders" },
+  { label: "Payments", icon: FiCreditCard, href: "/payments" },
+  { label: "Subscriptions", icon: FiRepeat, href: "/payments" },
+  { label: "Medicines", icon: FiPackage, href: "#" },
+  { label: "Notifications", icon: FiBell, href: "#", badge: 3 },
+  { label: "Profile", icon: FiUser, href: "#" },
+  { label: "Settings", icon: FiSettings, href: "#" },
 ];
 
 export default function Sidebar({ isOpen, onClose }) {
+  const pathname = usePathname();
+
   return (
     <>
       <div
@@ -32,26 +36,25 @@ export default function Sidebar({ isOpen, onClose }) {
       />
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col border-r border-slate-200 bg-white px-4 py-6 shadow-sm transition-transform duration-300 md:w-[220px] lg:w-[260px] ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-6 shadow-sm transition-transform duration-300 md:w-[220px] lg:w-[260px] ${
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
-        <div className="mb-8 flex items-center justify-between px-2">
+        <div className="mb-8 flex items-center justify-between px-1">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-teal-500 text-lg font-semibold text-white shadow-sm">
-              P
-            </div>
+            {/* Exact uploaded logo emblem image with transparent background */}
+            <img src="/logo-emblem.png" alt="PharmEasy" className="h-16 w-auto shrink-0 object-contain drop-shadow-sm" />
             <div>
-              <p className="text-lg font-semibold tracking-tight text-slate-900">
+              <p className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
                 PharmEasy
               </p>
-              <p className="text-sm font-medium text-teal-500">Smart</p>
+              <p className="text-xs font-semibold text-teal-600">Pharmacy Portal</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-slate-500 transition duration-300 hover:bg-slate-100 md:hidden"
+            className="rounded-full p-2 text-slate-500 dark:text-slate-400 transition duration-300 hover:bg-slate-100 dark:hover:bg-slate-800 md:hidden"
             aria-label="Close navigation"
           >
             <FiX className="h-4 w-4" />
@@ -59,21 +62,22 @@ export default function Sidebar({ isOpen, onClose }) {
         </div>
 
         <nav className="flex-1 space-y-2">
-          {navigationItems.map(({ label, icon: Icon, active, badge }) => {
-            const isActive = active;
+          {navigationItems.map(({ label, icon: Icon, href, badge }) => {
+            const isActive = href !== "#" && pathname === href;
 
             return (
-              <button
+              <Link
                 key={label}
-                type="button"
+                href={href}
+                onClick={onClose}
                 className={`flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-sm font-medium transition duration-300 ${
                   isActive
                     ? "bg-teal-500 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-teal-50 hover:text-teal-700"
+                    : "text-slate-600 dark:text-slate-300 hover:bg-teal-50 dark:hover:bg-slate-800 hover:text-teal-700 dark:hover:text-teal-400"
                 }`}
               >
                 <span className="flex items-center gap-3">
-                  <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-slate-500"}`} />
+                  <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-slate-500 dark:text-slate-400"}`} />
                   {label}
                 </span>
                 {badge ? (
@@ -81,7 +85,7 @@ export default function Sidebar({ isOpen, onClose }) {
                     {badge}
                   </span>
                 ) : null}
-              </button>
+              </Link>
             );
           })}
         </nav>
@@ -89,3 +93,5 @@ export default function Sidebar({ isOpen, onClose }) {
     </>
   );
 }
+
+

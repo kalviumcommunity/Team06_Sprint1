@@ -1,33 +1,54 @@
-// Order types for backend integration
-
-export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+export type OrderStatus =
+  | 'Order Placed'
+  | 'Pending'
+  | 'Processing'
+  | 'Shipped'
+  | 'Delivered'
+  | 'Cancelled'
+  | 'pending'
+  | 'processing'
+  | 'shipped'
+  | 'delivered'
+  | 'cancelled';
 
 export interface OrderItem {
   id: string;
+  orderId?: string;
+  medicineId?: string;
   medicineName: string;
-  dosage: string;
+  dosage?: string;
   quantity: number;
-  price: number;
+  unitPrice: number;
+  price?: number;
+}
+
+export interface OrderTrackingStep {
+  status: OrderStatus;
+  completedAt?: Date | string | null;
 }
 
 export interface OrderTracking {
   trackingNumber: string;
   currentStatus: OrderStatus;
-  steps: {
-    status: OrderStatus;
-    completedAt?: Date | null;
-  }[];
+  steps: OrderTrackingStep[];
 }
 
 export interface Order {
   id: string;
   orderNumber: string;
-  orderDate: Date | string;
+  date: string;
+  orderDate?: string | Date;
   status: OrderStatus;
-  items: OrderItem[];
+  price: number;
   totalAmount: number;
-  tracking: OrderTracking;
-  customerId: string;
+  address: string;
+  deliveryAddress?: string;
+  trackingId?: string | null;
+  tracking?: OrderTracking;
+  medicines: string[];
+  items: OrderItem[];
+  customerId?: string;
+  createdAt?: string | Date;
 }
 
 export interface OrderDetailsModalProps {

@@ -133,10 +133,10 @@ export default function SubscriptionsPage() {
               </select>
             </div>
           </div>
-          <button onClick={() => { setSelectedSub(null); setIsModalOpen(true); }}
+          <Link href="/medicines"
             className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition shadow-sm">
             <Plus size={16} strokeWidth={2.5} /> New Subscription
-          </button>
+          </Link>
         </div>
 
         {/* List */}

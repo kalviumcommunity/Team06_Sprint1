@@ -125,6 +125,18 @@ export async function DELETE(
     const cancelled = await prisma.subscription.update({
       where: { id },
       data: { status: "CANCELLED" },
+      include: { medicine: true },
+    });
+
+    // Create cancellation notification after successful cancel
+    await prisma.notification.create({
+      data: {
+        userId: existing.userId,
+        title: "Subscription Cancelled",
+        message: `Your subscription for ${cancelled.medicine.name} has been cancelled successfully.`,
+        type: "GENERAL",
+        isRead: false,
+      },
     });
 
     return NextResponse.json({ success: true, subscription: cancelled });

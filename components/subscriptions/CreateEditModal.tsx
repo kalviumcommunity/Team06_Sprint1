@@ -82,7 +82,7 @@ export default function CreateEditModal({ isOpen, onClose, onSuccess, initialDat
         body: JSON.stringify({ medicineId, frequency, quantity, startDate }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      if (!res.ok) throw new Error(data.message || "Failed to save subscription");
       onSuccess();
       onClose();
     } catch (err: unknown) {
@@ -126,7 +126,7 @@ export default function CreateEditModal({ isOpen, onClose, onSuccess, initialDat
               value={medicineId}
               onChange={(e) => setMedicineId(e.target.value)}
               required
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:ring-teal-500/30"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:ring-emerald-500/30"
             >
               <option value="">Select a medicine…</option>
               {medicines.map((m) => (
@@ -146,7 +146,7 @@ export default function CreateEditModal({ isOpen, onClose, onSuccess, initialDat
               <select
                 value={frequency}
                 onChange={(e) => setFrequency(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-teal-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               >
                 <option value="DAILY">Daily</option>
                 <option value="WEEKLY">Weekly</option>
@@ -160,7 +160,7 @@ export default function CreateEditModal({ isOpen, onClose, onSuccess, initialDat
                 min={1}
                 value={quantity}
                 onChange={(e) => setQuantity(Number(e.target.value))}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-teal-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
           </div>
@@ -171,7 +171,7 @@ export default function CreateEditModal({ isOpen, onClose, onSuccess, initialDat
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-teal-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             />
           </div>
 
@@ -186,7 +186,7 @@ export default function CreateEditModal({ isOpen, onClose, onSuccess, initialDat
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-teal-600 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-60 transition"
+              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 transition"
             >
               {loading && <Loader2 size={15} className="animate-spin" />}
               {loading ? "Saving…" : initialData ? "Update" : "Create"}

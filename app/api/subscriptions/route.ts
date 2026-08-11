@@ -191,14 +191,17 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      return sub;
+    }, {
+      timeout: 25000
     });
 
     return NextResponse.json({ success: true, subscription }, { status: 201 });
   } catch (error) {
     console.error("POST /api/subscriptions error:", error);
+    const rawMsg = error instanceof Error ? error.message : "Failed to create subscription";
+    const msg = rawMsg.replace(/postgresql:\/\/.*@/g, "postgresql://****@");
     return NextResponse.json(
-      { message: "Failed to create subscription" },
+      { success: false, message: msg },
       { status: 500 }
     );
   }

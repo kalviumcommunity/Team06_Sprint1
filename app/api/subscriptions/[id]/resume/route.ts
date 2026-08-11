@@ -38,6 +38,17 @@ export async function PATCH(
       include: { medicine: true },
     });
 
+    // Create resume notification after successful resume
+    await prisma.notification.create({
+      data: {
+        userId: existing.userId,
+        title: "Subscription Resumed",
+        message: `Your subscription for ${updated.medicine.name} has been resumed successfully.`,
+        type: "GENERAL",
+        isRead: false,
+      },
+    });
+
     return NextResponse.json({ success: true, subscription: updated });
   } catch (error) {
     console.error("PATCH /api/subscriptions/[id]/resume error:", error);

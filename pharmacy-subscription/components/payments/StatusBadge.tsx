@@ -25,6 +25,11 @@ const statusConfig = {
     className: "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400",
     Icon: XCircle,
   },
+  retrying: {
+    label: "Retrying",
+    className: "bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400",
+    Icon: Clock,
+  },
 };
 
 export default function StatusBadge({ status }: StatusBadgeProps) {

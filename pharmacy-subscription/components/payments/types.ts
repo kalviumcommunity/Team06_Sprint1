@@ -1,5 +1,5 @@
 // Payment status types
-export type PaymentStatus = "success" | "pending" | "failed";
+export type PaymentStatus = "success" | "pending" | "failed" | "retrying";
 
 // Sort options
 export type SortOption = "newest" | "oldest" | "highest" | "lowest";

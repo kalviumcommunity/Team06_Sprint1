@@ -25,7 +25,8 @@ import {
 } from "lucide-react";
 
 /* ─── Constants ──────────────────────────────────────────── */
-const RETRY_DELAY_MS = 45 * 60 * 1000; // 45 minutes
+// NOTE: The retry delay timer is configured server-side via PAYMENT_RETRY_DELAY_MS env var.
+// The frontend always reads retryAvailableAt directly from the DB response — no hard-coded delay here.
 
 /* ─── Types ──────────────────────────────────────────────── */
 type PaymentTab = "upi" | "card" | "wallet";
@@ -201,6 +202,7 @@ function PaymentsTab({ payments, onPaymentSubmitted }: PaymentsTabProps) {
   const [failedState, setFailedState] = useState<FailedState | null>(null);
   const [retryReady, setRetryReady] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [failureMsg, setFailureMsg] = useState<string | null>(null);
 
   useEffect(() => {
     const latest = payments[0];
@@ -236,7 +238,7 @@ function PaymentsTab({ payments, onPaymentSubmitted }: PaymentsTabProps) {
         : upiId
         ? `UPI: ${upiId}`
         : "UPI";
-    if (payTab === "card") return "Card";
+    if (payTab === "card") return cardName ? `Card: ${cardName}` : "Card";
     return selectedWallet
       ? (WALLETS.find((w) => w.key === selectedWallet)?.label ?? "Wallet")
       : "Wallet";
@@ -256,6 +258,7 @@ function PaymentsTab({ payments, onPaymentSubmitted }: PaymentsTabProps) {
     if (!canPay() || processing) return;
     setProcessing(true);
     setSuccessMsg(null);
+    setFailureMsg(null);
 
     const isRetry = failedState && retryReady;
     const url = isRetry
@@ -276,38 +279,52 @@ function PaymentsTab({ payments, onPaymentSubmitted }: PaymentsTabProps) {
 
       if (res.ok) {
         if (isRetry) {
-          setSuccessMsg("Payment retry initiated! Please wait...");
+          // Retry API returns { message, payment } — no data.success field
+          setSuccessMsg("Payment retry initiated! Checking result...");
           setTimeout(() => {
             onPaymentSubmitted();
-          }, 3200);
+            setSuccessMsg(null);
+          }, 3500);
         } else {
+          // Fresh payment — API always returns { success: true, payment: {...} }
           if (data.success) {
             if (data.payment.status === "SUCCESS") {
               setFailedState(null);
               setRetryReady(false);
+              setFailureMsg(null);
               setSubscriptionPaid(true);
               setNextBillingDate(nextMonthLabel());
               setSuccessMsg("Payment Successful! Your subscription is now active.");
             } else {
+              // Payment failed
+              const retryAt = data.payment.retryAvailableAt
+                ? new Date(data.payment.retryAvailableAt).getTime()
+                : Date.now() + 45 * 60 * 1000;
               setFailedState({
-                retryAvailableAt: new Date(data.payment.retryAvailableAt).getTime(),
+                retryAvailableAt: retryAt,
                 paymentId: data.payment.id,
               });
               setRetryReady(false);
+              setSuccessMsg(null);
+              setFailureMsg("Payment failed. Your transaction could not be processed. Please retry after 45 minutes.");
             }
             onPaymentSubmitted();
+          } else {
+            setFailureMsg(data.error || "Payment could not be processed. Please try again.");
           }
         }
       } else {
+        setFailureMsg(data.error || "Payment request failed. Please check your details and try again.");
         console.error("Payment action failed:", data.error);
       }
     } catch (e) {
+      setFailureMsg("A network error occurred. Please check your connection and try again.");
       console.error("Payment error", e);
     } finally {
       if (!isRetry) {
         setProcessing(false);
       } else {
-        setTimeout(() => setProcessing(false), 3200);
+        setTimeout(() => setProcessing(false), 3500);
       }
     }
   };
@@ -327,6 +344,24 @@ function PaymentsTab({ payments, onPaymentSubmitted }: PaymentsTabProps) {
             <CheckCircle2 size={20} strokeWidth={2.5} className="shrink-0" />
             <p className="flex-1 text-sm font-semibold">{successMsg}</p>
             <button onClick={() => setSuccessMsg(null)} className="rounded-lg p-1 hover:bg-white/20 transition-colors">
+              <X size={15} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Failure Banner */}
+      <AnimatePresence>
+        {failureMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex items-center gap-3 rounded-2xl bg-rose-500 px-5 py-3.5 text-white shadow-lg"
+          >
+            <AlertCircle size={20} strokeWidth={2.5} className="shrink-0" />
+            <p className="flex-1 text-sm font-semibold">{failureMsg}</p>
+            <button onClick={() => setFailureMsg(null)} className="rounded-lg p-1 hover:bg-white/20 transition-colors">
               <X size={15} />
             </button>
           </motion.div>
@@ -608,6 +643,42 @@ function PaymentsTab({ payments, onPaymentSubmitted }: PaymentsTabProps) {
   );
 }
 
+/* ─── No Subscription State ──────────────────────────────── */
+function NoSubscriptionState() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="mx-auto max-w-[520px]"
+    >
+      <div
+        className="rounded-[28px] border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900 p-10 text-center shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+        style={{ background: "linear-gradient(160deg, rgba(0,179,134,0.04) 0%, transparent 60%)" }}
+      >
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-50 dark:bg-teal-950/30 shadow-sm">
+          <FileText size={28} className="text-teal-500" />
+        </div>
+        <h2 className="text-[20px] font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">
+          No Active Subscription
+        </h2>
+        <p className="text-[13px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-6">
+          You need to have an active subscription order before you can make a payment.
+          Please visit the Orders page to view your subscription.
+        </p>
+        <a
+          href="/orders"
+          className="inline-flex items-center gap-2 rounded-xl bg-teal-500 hover:bg-teal-600 active:scale-95 px-6 py-3 text-[14px] font-bold text-white shadow-md transition-all"
+          style={{ boxShadow: "0 4px 16px rgba(0,179,134,0.30)" }}
+        >
+          <CalendarDays size={16} />
+          View My Orders
+        </a>
+      </div>
+    </motion.div>
+  );
+}
+
 /* ─── Root Page ──────────────────────────────────────────── */
 function PaymentsPageContent() {
   const searchParams = useSearchParams();
@@ -616,6 +687,7 @@ function PaymentsPageContent() {
   const [activeTab, setActiveTab] = useState<"payments" | "history">("payments");
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [hasSubscription, setHasSubscription] = useState<boolean | null>(null);
 
   // Auto-switch to history if orderId is in URL
   useEffect(() => {
@@ -634,11 +706,32 @@ function PaymentsPageContent() {
     }
   }, []);
 
+  // Check if user has any orders (subscription)
+  useEffect(() => {
+    async function checkSubscription() {
+      try {
+        const res = await fetch("/api/orders");
+        if (res.ok) {
+          const orders = await res.json();
+          setHasSubscription(Array.isArray(orders) && orders.length > 0);
+        } else {
+          setHasSubscription(false);
+        }
+      } catch {
+        setHasSubscription(false);
+      }
+    }
+    checkSubscription();
+  }, []);
+
   useEffect(() => { loadPayments(); }, [loadPayments]);
 
-  const handleRetryClick = useCallback((payment: Payment) => {
-    // no-op for now — inline retry handled inside PaymentsTab
+  const handleRetryClick = useCallback((_payment: Payment) => {
+    // no-op — inline retry handled inside PaymentsTab
   }, []);
+
+  // Show subscription check state while loading
+  const isCheckingSubscription = hasSubscription === null;
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
@@ -652,51 +745,64 @@ function PaymentsPageContent() {
             <TabControl activeTab={activeTab} onTabChange={setActiveTab} />
           </div>
 
+          {/* ── Subscription check loading ── */}
+          {isCheckingSubscription && (
+            <div className="flex items-center justify-center py-20">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+            </div>
+          )}
+
           {/* ── Tab Content ── */}
-          <AnimatePresence mode="wait">
-            {activeTab === "payments" ? (
-              <motion.div
-                key="payments-tab"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-              >
-                <PaymentsTab payments={payments} onPaymentSubmitted={loadPayments} />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="history-tab"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="mx-auto max-w-[850px]"
-              >
-                <div className="rounded-[24px] border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900 p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] sm:p-8">
-                  <div className="mb-6">
-                    <h2 className="text-[18px] font-bold text-slate-900 dark:text-white tracking-tight">
-                      Payment History
-                    </h2>
-                    <p className="mt-1 text-[13px] text-slate-400 dark:text-slate-500 font-medium">
-                      View all your past payments and their status
-                    </p>
-                  </div>
-                  <PaymentHistory payments={payments} loading={loading} onRetry={handleRetryClick} />
-                  {!loading && payments.length > 0 && (
-                    <motion.button
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                      onClick={loadPayments}
-                      className="mt-6 w-full rounded-xl py-3.5 text-center text-sm font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 cursor-pointer transition-colors bg-[#f8fafc] dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700"
-                    >
-                      Refresh Transactions
-                    </motion.button>
+          {!isCheckingSubscription && (
+            <AnimatePresence mode="wait">
+              {activeTab === "payments" ? (
+                <motion.div
+                  key="payments-tab"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                >
+                  {hasSubscription ? (
+                    <PaymentsTab payments={payments} onPaymentSubmitted={loadPayments} />
+                  ) : (
+                    <NoSubscriptionState />
                   )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="history-tab"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="mx-auto max-w-[850px]"
+                >
+                  <div className="rounded-[24px] border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900 p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] sm:p-8">
+                    <div className="mb-6">
+                      <h2 className="text-[18px] font-bold text-slate-900 dark:text-white tracking-tight">
+                        Payment History
+                      </h2>
+                      <p className="mt-1 text-[13px] text-slate-400 dark:text-slate-500 font-medium">
+                        View all your past payments and their status
+                      </p>
+                    </div>
+                    <PaymentHistory payments={payments} loading={loading} onRetry={handleRetryClick} />
+                    {!loading && payments.length > 0 && (
+                      <motion.button
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
+                        onClick={loadPayments}
+                        className="mt-6 w-full rounded-xl py-3.5 text-center text-sm font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 cursor-pointer transition-colors bg-[#f8fafc] dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700"
+                      >
+                        Refresh Transactions
+                      </motion.button>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
 
         </div>
       </main>

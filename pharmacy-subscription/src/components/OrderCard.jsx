@@ -49,13 +49,6 @@ export default function OrderCard({ order, onViewDetails, isLoading }) {
         </div>
         <div className="flex flex-col items-start sm:items-end gap-1">
           <p className="text-xl font-semibold text-slate-900 dark:text-white">₹{order.price ?? order.totalAmount}</p>
-          <Link
-            href={`/payments?orderId=${displayOrderNumber}`}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:underline"
-          >
-            <FiCreditCard className="h-3.5 w-3.5" />
-            <span>Payment Info</span>
-          </Link>
         </div>
       </div>
 
@@ -93,7 +86,14 @@ export default function OrderCard({ order, onViewDetails, isLoading }) {
           <FiMapPin className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{order.address || order.deliveryAddress}</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/payments`}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-teal-500 bg-teal-500/10 dark:bg-teal-500/15 px-4 py-2 text-sm font-bold text-teal-600 dark:text-teal-400 transition-all hover:bg-teal-500 hover:text-white active:scale-95"
+          >
+            <FiCreditCard className="h-4 w-4" />
+            <span>Make Payment</span>
+          </Link>
           <button
             type="button"
             onClick={() => onViewDetails(order)}
@@ -110,4 +110,3 @@ export default function OrderCard({ order, onViewDetails, isLoading }) {
     </article>
   );
 }
-

@@ -3,7 +3,10 @@ import { prisma } from '@/lib/prisma';
 import { createNotification } from '@/services/notificationService';
 import { getAuthenticatedUserId } from '@/lib/getAuthUserId';
 
-const RETRY_DELAY_MS = 45 * 60 * 1000; // 45 minutes
+// ── Retry delay: configurable via env var for dev/testing ──────────────────
+// Set PAYMENT_RETRY_DELAY_MS=60000 in .env for a 1-minute dev timer.
+// Omit (or set to 2700000) in production to keep the 45-minute window.
+const RETRY_DELAY_MS = Number(process.env.PAYMENT_RETRY_DELAY_MS) || 45 * 60 * 1000;
 
 export async function GET() {
   const auth = await getAuthenticatedUserId();
@@ -79,8 +82,12 @@ export async function POST(request: Request) {
       }
     }
 
+    // Support intentional dev/testing failure trigger via method containing "fail" or "failure" (case-insensitive)
+    const isTestFailure = method && (method.toLowerCase().includes('fail') || method.toLowerCase().includes('failure'));
+    const isTestSuccess = method && (method.toLowerCase().includes('success') || method.toLowerCase().includes('complete'));
+
     // Simulate payment result (70% success rate for demo)
-    const isSuccess = Math.random() < 0.7;
+    const isSuccess = isTestFailure ? false : isTestSuccess ? true : Math.random() < 0.7;
     const status = isSuccess ? 'SUCCESS' : 'FAILED';
 
     const now = new Date();
@@ -110,7 +117,7 @@ export async function POST(request: Request) {
       title: isSuccess ? 'Payment Successful' : 'Payment Failed',
       message: isSuccess
         ? `Your subscription payment of ₹${payment.amount} for ${displayOrderNumber} was successful.`
-        : `Your subscription payment of ₹${payment.amount} for ${displayOrderNumber} failed. You may retry after 45 minutes.`,
+        : `Your subscription payment of ₹${payment.amount} for ${displayOrderNumber} failed. You may retry after ${Math.round(RETRY_DELAY_MS / 60000)} minute(s).`,
       orderId: dbOrderId,
       paymentId: payment.id,
     });

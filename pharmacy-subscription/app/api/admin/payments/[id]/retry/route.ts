@@ -5,6 +5,11 @@ import { getAuthenticatedUserId } from '@/lib/getAuthUserId';
 
 const MAX_RETRIES = 3;
 
+// ── Retry delay: configurable via env var for dev/testing ──────────────────
+// Set PAYMENT_RETRY_DELAY_MS=60000 in .env for a 1-minute dev timer.
+// Omit (or set to 2700000) in production to keep the 45-minute window.
+const RETRY_DELAY_MS = Number(process.env.PAYMENT_RETRY_DELAY_MS) || 45 * 60 * 1000;
+
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -94,7 +99,9 @@ export async function POST(
     // Simulate async payment processing (3 seconds for demo)
     setTimeout(async () => {
       try {
-        const isSuccess = Math.random() < 0.65;
+        // For testing/development retry flow, force retry success if original method was a test failure trigger
+        const isTestFailure = payment.method && (payment.method.toLowerCase().includes('fail') || payment.method.toLowerCase().includes('failure'));
+        const isSuccess = isTestFailure ? true : Math.random() < 0.65;
         const finalStatus = isSuccess ? 'SUCCESS' : 'FAILED';
         const now = new Date();
 
@@ -102,9 +109,9 @@ export async function POST(
           where: { id },
           data: {
             status: finalStatus,
-            // On retry failure, set a new 45-min window
+            // On retry failure, set a new retry window based on RETRY_DELAY_MS
             paymentFailedAt: isSuccess ? null : now,
-            retryAvailableAt: isSuccess ? null : new Date(now.getTime() + 45 * 60 * 1000),
+            retryAvailableAt: isSuccess ? null : new Date(now.getTime() + RETRY_DELAY_MS),
           },
         });
 
@@ -114,7 +121,7 @@ export async function POST(
           title: isSuccess ? 'Payment Retry Successful' : 'Payment Retry Failed',
           message: isSuccess
             ? `Payment retry for ${orderRef} was successful.`
-            : `Payment retry for ${orderRef} failed again. A new 45-minute window has started.`,
+            : `Payment retry for ${orderRef} failed again. A new ${Math.round(RETRY_DELAY_MS / 60000)}-minute retry window has started.`,
           orderId: updated.order?.id ?? null,
           paymentId: id,
         });

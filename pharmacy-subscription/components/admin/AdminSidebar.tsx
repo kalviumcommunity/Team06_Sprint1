@@ -12,15 +12,19 @@ import {
   Settings,
   X,
   ShieldCheck,
+  Bell,
+  BarChart2,
 } from 'lucide-react';
 
 const adminNav = [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
-  { label: 'Orders', icon: ShoppingBag, href: '/admin/orders' },
-  { label: 'Payments', icon: CreditCard, href: '/admin/payments' },
   { label: 'Users', icon: Users, href: '/admin/users' },
   { label: 'Medicines', icon: Pill, href: '/admin/medicines' },
   { label: 'Subscriptions', icon: RefreshCw, href: '/admin/subscriptions' },
+  { label: 'Orders', icon: ShoppingBag, href: '/admin/orders' },
+  { label: 'Payments', icon: CreditCard, href: '/admin/payments' },
+  { label: 'Notifications', icon: Bell, href: '/admin/notifications' },
+  { label: 'Reports', icon: BarChart2, href: '/admin/reports' },
   { label: 'Settings', icon: Settings, href: '/admin/settings' },
 ];
 

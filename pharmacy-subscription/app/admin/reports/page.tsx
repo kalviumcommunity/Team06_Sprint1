@@ -53,9 +53,9 @@ const formatRevenueTick = (val: number) => formatCurrency(val);
 function RevenueTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) {
   if (active && payload && payload.length) {
     return (
-      <div className="rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-lg">
-        <p className="mb-1 text-xs font-semibold text-slate-500">{label}</p>
-        <p className="text-base font-bold text-teal-600">{formatCurrency(payload[0].value)}</p>
+      <div className="rounded-xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 shadow-lg">
+        <p className="mb-1 text-xs font-semibold text-slate-500 dark:text-slate-400">{label}</p>
+        <p className="text-base font-bold text-teal-600 dark:text-teal-400">{formatCurrency(payload[0].value)}</p>
       </div>
     );
   }
@@ -66,9 +66,9 @@ function RevenueTooltip({ active, payload, label }: { active?: boolean; payload?
 function OrdersTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) {
   if (active && payload && payload.length) {
     return (
-      <div className="rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-lg">
-        <p className="mb-1 text-xs font-semibold text-slate-500">{label}</p>
-        <p className="text-base font-bold text-blue-600">{payload[0].value} orders</p>
+      <div className="rounded-xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 shadow-lg">
+        <p className="mb-1 text-xs font-semibold text-slate-500 dark:text-slate-400">{label}</p>
+        <p className="text-base font-bold text-blue-600 dark:text-blue-400">{payload[0].value} orders</p>
       </div>
     );
   }
@@ -94,10 +94,10 @@ const renderPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percentage
 // ─── Skeleton Card ────────────────────────────────────────────────────────────
 function SkeletonCard({ height = 280 }: { height?: number }) {
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
-      <div className="mb-5 h-5 w-40 animate-pulse rounded-lg bg-slate-100" />
+    <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
+      <div className="mb-5 h-5 w-40 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-700" />
       <div
-        className="animate-pulse rounded-xl bg-slate-100"
+        className="animate-pulse rounded-xl bg-slate-100 dark:bg-slate-700"
         style={{ height }}
       />
     </div>
@@ -107,7 +107,7 @@ function SkeletonCard({ height = 280 }: { height?: number }) {
 // ─── Empty State ──────────────────────────────────────────────────────────────
 function EmptyState({ label }: { label: string }) {
   return (
-    <div className="flex h-48 flex-col items-center justify-center gap-2 text-slate-400">
+    <div className="flex h-48 flex-col items-center justify-center gap-2 text-slate-400 dark:text-slate-500">
       <PieChart className="h-8 w-8 opacity-40" />
       <p className="text-sm font-medium">No data available for {label}</p>
     </div>
@@ -119,8 +119,18 @@ export default function AdminReportsPage() {
   const [data, setData] = useState<ReportsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
+    // Check initial dark mode state
+    setIsDark(document.documentElement.classList.contains('dark'));
+    
+    // Observer to update chart colors when theme toggles
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
     async function fetchReports() {
       setLoading(true);
       setError(null);
@@ -136,23 +146,28 @@ export default function AdminReportsPage() {
       }
     }
     fetchReports();
+
+    return () => observer.disconnect();
   }, []);
+
+  const gridColor = isDark ? '#334155' : '#f1f5f9';
+  const axisTextColor = isDark ? '#94a3b8' : '#64748b';
 
   return (
     <div className="space-y-6">
       {/* ── Page Header ─────────────────────────────────────────────────────── */}
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
           Reports &amp; Analytics
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Real-time insights from your orders, payments and medicines.
         </p>
       </div>
 
       {/* ── Error Banner ─────────────────────────────────────────────────────── */}
       {error && (
-        <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="flex items-center gap-3 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 p-4 text-sm text-red-700 dark:text-red-400">
           <AlertCircle className="h-5 w-5 shrink-0" />
           {error}
         </div>
@@ -162,12 +177,12 @@ export default function AdminReportsPage() {
       {loading ? (
         <SkeletonCard height={300} />
       ) : (
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
           <div className="mb-5 flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-50">
-              <TrendingUp className="h-4 w-4 text-teal-600" />
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-50 dark:bg-teal-900/40">
+              <TrendingUp className="h-4 w-4 text-teal-600 dark:text-teal-400" />
             </span>
-            <h2 className="text-base font-bold text-slate-900">Revenue Trend</h2>
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Revenue Trend</h2>
           </div>
 
           {!data?.revenueTrend?.length ? (
@@ -178,16 +193,16 @@ export default function AdminReportsPage() {
                 data={data.revenueTrend}
                 margin={{ top: 10, right: 20, left: 10, bottom: 5 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
                 <XAxis
                   dataKey="month"
-                  tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 500 }}
+                  tick={{ fontSize: 12, fill: axisTextColor, fontWeight: 500 }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
                   tickFormatter={formatRevenueTick}
-                  tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 500 }}
+                  tick={{ fontSize: 12, fill: axisTextColor, fontWeight: 500 }}
                   axisLine={false}
                   tickLine={false}
                   width={60}
@@ -198,8 +213,8 @@ export default function AdminReportsPage() {
                   dataKey="revenue"
                   stroke="#0d9488"
                   strokeWidth={2.5}
-                  dot={{ r: 5, fill: '#0d9488', strokeWidth: 2, stroke: '#fff' }}
-                  activeDot={{ r: 7, fill: '#0d9488', stroke: '#fff', strokeWidth: 2 }}
+                  dot={{ r: 5, fill: '#0d9488', strokeWidth: 2, stroke: isDark ? '#1e293b' : '#fff' }}
+                  activeDot={{ r: 7, fill: '#0d9488', stroke: isDark ? '#1e293b' : '#fff', strokeWidth: 2 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -214,12 +229,12 @@ export default function AdminReportsPage() {
         {loading ? (
           <SkeletonCard height={260} />
         ) : (
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
             <div className="mb-5 flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
-                <ShoppingBag className="h-4 w-4 text-blue-600" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-900/40">
+                <ShoppingBag className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </span>
-              <h2 className="text-base font-bold text-slate-900">Monthly Orders</h2>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Monthly Orders</h2>
             </div>
 
             {!data?.monthlyOrders?.length ? (
@@ -230,16 +245,16 @@ export default function AdminReportsPage() {
                   data={data.monthlyOrders}
                   margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
                   <XAxis
                     dataKey="month"
-                    tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 500 }}
+                    tick={{ fontSize: 12, fill: axisTextColor, fontWeight: 500 }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
                     allowDecimals={false}
-                    tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 500 }}
+                    tick={{ fontSize: 12, fill: axisTextColor, fontWeight: 500 }}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -260,12 +275,12 @@ export default function AdminReportsPage() {
         {loading ? (
           <SkeletonCard height={260} />
         ) : (
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 shadow-sm">
             <div className="mb-5 flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50">
-                <PieChart className="h-4 w-4 text-amber-500" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-900/40">
+                <PieChart className="h-4 w-4 text-amber-500 dark:text-amber-400" />
               </span>
-              <h2 className="text-base font-bold text-slate-900">Top Categories</h2>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Top Categories</h2>
             </div>
 
             {!data?.topCategories?.length ? (
@@ -289,6 +304,7 @@ export default function AdminReportsPage() {
                           <Cell
                             key={`cell-${index}`}
                             fill={PIE_COLORS[index % PIE_COLORS.length]}
+                            stroke={isDark ? '#1e293b' : '#fff'}
                           />
                         ))}
                       </Pie>
@@ -305,9 +321,9 @@ export default function AdminReportsPage() {
                           className="h-2.5 w-2.5 shrink-0 rounded-full"
                           style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
                         />
-                        <span className="text-sm font-medium text-slate-700">{cat.name}</span>
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{cat.name}</span>
                       </div>
-                      <span className="text-sm font-bold text-slate-900">{cat.percentage}%</span>
+                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{cat.percentage}%</span>
                     </div>
                   ))}
                 </div>

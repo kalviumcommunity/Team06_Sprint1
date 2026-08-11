@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import {
   CreditCard,
   CheckCircle,
@@ -47,17 +47,17 @@ interface Pagination {
 }
 
 /* ── Status config ──────────────────────────────────────────── */
-const statusConfig: Record<string, { label: string; classes: string; dot: string }> = {
-  SUCCESS:  { label: 'Success',  classes: 'bg-emerald-50 text-emerald-700 border border-emerald-200', dot: 'bg-emerald-500' },
-  PENDING:  { label: 'Pending',  classes: 'bg-amber-50   text-amber-700   border border-amber-200',   dot: 'bg-amber-500'   },
-  FAILED:   { label: 'Failed',   classes: 'bg-red-50     text-red-700     border border-red-200',     dot: 'bg-red-500'     },
-  RETRYING: { label: 'Retrying', classes: 'bg-purple-50  text-purple-700  border border-purple-200',  dot: 'bg-purple-500'  },
+const statusConfig: Record<string, { label: string; classes: string; darkClasses: string; dot: string }> = {
+  SUCCESS:  { label: 'Success',  classes: 'bg-emerald-50 text-emerald-700 border border-emerald-200', darkClasses: 'dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800', dot: 'bg-emerald-500' },
+  PENDING:  { label: 'Pending',  classes: 'bg-amber-50   text-amber-700   border border-amber-200',   darkClasses: 'dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800',   dot: 'bg-amber-500'   },
+  FAILED:   { label: 'Failed',   classes: 'bg-red-50     text-red-700     border border-red-200',     darkClasses: 'dark:bg-red-900/30 dark:text-red-300 dark:border-red-800',     dot: 'bg-red-500'     },
+  RETRYING: { label: 'Retrying', classes: 'bg-purple-50  text-purple-700  border border-purple-200',  darkClasses: 'dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800',  dot: 'bg-purple-500'  },
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg = statusConfig[status] ?? { label: status, classes: 'bg-slate-100 text-slate-600 border border-slate-200', dot: 'bg-slate-400' };
+  const cfg = statusConfig[status] ?? { label: status, classes: 'bg-slate-100 text-slate-600 border border-slate-200', darkClasses: 'dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600', dot: 'bg-slate-400' };
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${cfg.classes}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${cfg.classes} ${cfg.darkClasses}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
       {cfg.label}
     </span>
@@ -71,27 +71,27 @@ function SummaryCard({
   label: string; value: number; icon: React.ElementType; color: string; active: boolean; onClick: () => void;
 }) {
   const colors: Record<string, { bg: string; icon: string; ring: string }> = {
-    blue:   { bg: 'bg-blue-50',   icon: 'text-blue-600',   ring: 'ring-blue-300'   },
-    green:  { bg: 'bg-emerald-50',icon: 'text-emerald-600',ring: 'ring-emerald-300' },
-    amber:  { bg: 'bg-amber-50',  icon: 'text-amber-600',  ring: 'ring-amber-300'  },
-    red:    { bg: 'bg-red-50',    icon: 'text-red-600',    ring: 'ring-red-300'    },
-    purple: { bg: 'bg-purple-50', icon: 'text-purple-600', ring: 'ring-purple-300' },
+    blue:   { bg: 'bg-blue-50 dark:bg-blue-900/30',   icon: 'text-blue-600 dark:text-blue-400',   ring: 'ring-blue-300 dark:ring-blue-700'   },
+    green:  { bg: 'bg-emerald-50 dark:bg-emerald-900/30',icon: 'text-emerald-600 dark:text-emerald-400',ring: 'ring-emerald-300 dark:ring-emerald-700' },
+    amber:  { bg: 'bg-amber-50 dark:bg-amber-900/30',  icon: 'text-amber-600 dark:text-amber-400',  ring: 'ring-amber-300 dark:ring-amber-700'  },
+    red:    { bg: 'bg-red-50 dark:bg-red-900/30',    icon: 'text-red-600 dark:text-red-400',    ring: 'ring-red-300 dark:ring-red-700'    },
+    purple: { bg: 'bg-purple-50 dark:bg-purple-900/30', icon: 'text-purple-600 dark:text-purple-400', ring: 'ring-purple-300 dark:ring-purple-700' },
   };
   const c = colors[color] ?? colors.blue;
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex flex-col gap-3 rounded-2xl border bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
-        active ? `ring-2 ${c.ring} border-transparent` : 'border-slate-200/80'
+      className={`flex flex-col gap-3 rounded-2xl border bg-white dark:bg-slate-800 p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
+        active ? `ring-2 ${c.ring} border-transparent` : 'border-slate-200/80 dark:border-slate-700'
       }`}
     >
       <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${c.bg}`}>
         <Icon className={`h-5 w-5 ${c.icon}`} />
       </div>
       <div>
-        <p className="text-2xl font-extrabold text-slate-900">{value}</p>
-        <p className="mt-0.5 text-xs font-semibold text-slate-500">{label}</p>
+        <p className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">{value}</p>
+        <p className="mt-0.5 text-xs font-semibold text-slate-500 dark:text-slate-400">{label}</p>
       </div>
     </button>
   );
@@ -100,7 +100,6 @@ function SummaryCard({
 /* ── Main component ─────────────────────────────────────────── */
 function AdminPaymentsContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   const [payments, setPayments] = useState<AdminPayment[]>([]);
   const [summary, setSummary] = useState<PaymentSummary | null>(null);
@@ -138,8 +137,6 @@ function AdminPaymentsContent() {
   }, [page, statusFilter, search]);
 
   useEffect(() => { fetchPayments(); }, [fetchPayments]);
-
-  // Reset page when filters change
   useEffect(() => { setPage(1); }, [statusFilter, search]);
 
   const handleRetry = async (paymentId: string) => {
@@ -152,7 +149,6 @@ function AdminPaymentsContent() {
         setRetryMsg({ id: paymentId, success: false, msg: data.error ?? 'Retry failed' });
       } else {
         setRetryMsg({ id: paymentId, success: true, msg: data.message ?? 'Retry initiated' });
-        // Refresh list after a short delay to show RETRYING status
         setTimeout(() => fetchPayments(), 800);
       }
     } catch {
@@ -176,15 +172,15 @@ function AdminPaymentsContent() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Payments</h1>
-        <p className="mt-1 text-sm text-slate-500">Manage and monitor all customer payments</p>
+        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Payments</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Manage and monitor all customer payments</p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {loading && !summary
           ? Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-28 animate-pulse rounded-2xl bg-slate-100" />
+              <div key={i} className="h-28 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
             ))
           : summaryCards.map((c) => (
               <SummaryCard
@@ -204,8 +200,8 @@ function AdminPaymentsContent() {
         <div
           className={`flex items-center gap-3 rounded-xl border p-4 text-sm font-semibold ${
             retryMsg.success
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-              : 'border-red-200 bg-red-50 text-red-700'
+              ? 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
+              : 'border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
           }`}
         >
           {retryMsg.success ? (
@@ -227,21 +223,21 @@ function AdminPaymentsContent() {
       {/* Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
           <input
             id="payment-search"
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by user, payment ID or order number..."
-            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 shadow-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2.5 pl-10 pr-4 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/50"
           />
         </div>
         <select
           id="payment-status-filter"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+          className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 shadow-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/50"
         >
           <option value="ALL">All Status</option>
           <option value="SUCCESS">Success</option>
@@ -252,22 +248,20 @@ function AdminPaymentsContent() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        {/* Loading */}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
         {loading && (
           <div className="flex items-center justify-center py-16">
             <div className="flex flex-col items-center gap-3">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
-              <p className="text-sm font-medium text-slate-500">Loading payments...</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Loading payments...</p>
             </div>
           </div>
         )}
 
-        {/* Error */}
         {!loading && error && (
           <div className="flex flex-col items-center gap-3 py-16 text-center">
             <AlertCircle className="h-10 w-10 text-red-400" />
-            <p className="text-sm font-semibold text-red-700">{error}</p>
+            <p className="text-sm font-semibold text-red-700 dark:text-red-400">{error}</p>
             <button
               onClick={fetchPayments}
               className="mt-1 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
@@ -277,12 +271,11 @@ function AdminPaymentsContent() {
           </div>
         )}
 
-        {/* Empty */}
         {!loading && !error && payments.length === 0 && (
           <div className="flex flex-col items-center gap-2 py-16 text-center">
-            <CreditCard className="h-10 w-10 text-slate-300" />
-            <p className="text-sm font-semibold text-slate-600">No payments found</p>
-            <p className="text-xs text-slate-400">
+            <CreditCard className="h-10 w-10 text-slate-300 dark:text-slate-600" />
+            <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">No payments found</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
               {statusFilter !== 'ALL' || search
                 ? 'Try adjusting your filters'
                 : 'No payment records exist yet'}
@@ -290,17 +283,16 @@ function AdminPaymentsContent() {
           </div>
         )}
 
-        {/* Table rows */}
         {!loading && !error && payments.length > 0 && (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/60">
+                <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-700/40">
                   {['Payment ID', 'User', 'Order', 'Medicines', 'Amount', 'Method', 'Status', 'Date', 'Retries', 'Action'].map(
                     (h) => (
                       <th
                         key={h}
-                        className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-500"
+                        className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                       >
                         {h}
                       </th>
@@ -308,20 +300,20 @@ function AdminPaymentsContent() {
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                 {payments.map((p) => (
                   <tr
                     key={p.id}
-                    className="group transition-colors hover:bg-blue-50/40"
+                    className="group transition-colors hover:bg-blue-50/40 dark:hover:bg-slate-700/40"
                   >
-                    <td className="px-4 py-4 font-mono text-xs font-semibold text-blue-700">
+                    <td className="px-4 py-4 font-mono text-xs font-semibold text-blue-700 dark:text-blue-400">
                       {p.id.slice(0, 12)}…
                     </td>
                     <td className="px-4 py-4">
-                      <p className="font-semibold text-slate-900">{p.userName}</p>
-                      <p className="text-xs text-slate-400">{p.userEmail}</p>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">{p.userName}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500">{p.userEmail}</p>
                     </td>
-                    <td className="px-4 py-4 font-mono text-xs text-slate-600">
+                    <td className="px-4 py-4 font-mono text-xs text-slate-600 dark:text-slate-400">
                       {p.orderNumber ?? '—'}
                     </td>
                     <td className="max-w-[180px] px-4 py-4">
@@ -330,31 +322,31 @@ function AdminPaymentsContent() {
                           ? p.medicines.slice(0, 2).map((m, i) => (
                               <span
                                 key={i}
-                                className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600"
+                                className="rounded-full bg-slate-100 dark:bg-slate-700 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:text-slate-300"
                               >
                                 {m}
                               </span>
                             ))
-                          : <span className="text-xs text-slate-400">—</span>}
+                          : <span className="text-xs text-slate-400 dark:text-slate-500">—</span>}
                         {p.medicines.length > 2 && (
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                          <span className="rounded-full bg-slate-100 dark:bg-slate-700 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
                             +{p.medicines.length - 2}
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 font-bold text-slate-900">
+                    <td className="px-4 py-4 font-bold text-slate-900 dark:text-slate-100">
                       ₹{p.amount.toLocaleString('en-IN')}
                     </td>
                     <td className="px-4 py-4">
-                      <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                      <span className="rounded-lg bg-slate-100 dark:bg-slate-700 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
                         {p.method}
                       </span>
                     </td>
                     <td className="px-4 py-4">
                       <StatusBadge status={p.status} />
                     </td>
-                    <td className="px-4 py-4 text-xs text-slate-500 whitespace-nowrap">
+                    <td className="px-4 py-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
                       {new Date(p.createdAt).toLocaleDateString('en-IN', {
                         day: '2-digit', month: 'short', year: 'numeric',
                       })}
@@ -362,7 +354,9 @@ function AdminPaymentsContent() {
                     <td className="px-4 py-4 text-center">
                       <span
                         className={`rounded-full px-2 py-1 text-xs font-bold ${
-                          p.retryCount > 0 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
+                          p.retryCount > 0
+                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                            : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
                         }`}
                       >
                         {p.retryCount}
@@ -381,7 +375,7 @@ function AdminPaymentsContent() {
                           {retrying === p.id ? 'Retrying…' : 'Retry'}
                         </button>
                       ) : (
-                        <span className="text-xs text-slate-400">—</span>
+                        <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
                       )}
                     </td>
                   </tr>
@@ -395,7 +389,7 @@ function AdminPaymentsContent() {
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Showing {(pagination.page - 1) * pagination.pageSize + 1}–
             {Math.min(pagination.page * pagination.pageSize, pagination.totalCount)} of{' '}
             {pagination.totalCount} payments
@@ -406,7 +400,7 @@ function AdminPaymentsContent() {
               type="button"
               disabled={pagination.page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-blue-50 disabled:opacity-40"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 shadow-sm transition hover:bg-blue-50 dark:hover:bg-slate-700 disabled:opacity-40"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -418,7 +412,7 @@ function AdminPaymentsContent() {
                 className={`h-9 w-9 rounded-xl text-sm font-bold transition ${
                   page === p
                     ? 'bg-blue-600 text-white shadow-md'
-                    : 'border border-slate-200 bg-white text-slate-600 hover:bg-blue-50'
+                    : 'border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700'
                 }`}
               >
                 {p}
@@ -429,7 +423,7 @@ function AdminPaymentsContent() {
               type="button"
               disabled={pagination.page >= pagination.totalPages}
               onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-blue-50 disabled:opacity-40"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 shadow-sm transition hover:bg-blue-50 dark:hover:bg-slate-700 disabled:opacity-40"
             >
               <ChevronRight className="h-4 w-4" />
             </button>

@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Frequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  UPI
+  NET_BANKING
+}
+
+enum NotificationType {
+  SUBSCRIPTION_CREATED
+  REFILL_REMINDER
+  ORDER_UPDATE
+  PAYMENT_UPDATE
+  GENERAL
+}
+
+model User {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  dob       DateTime
+  gender    String
+  email     String   @unique
+  phone     String
+  place     String
+  password  String
+  role      Role     @default(USER)
+
+  subscriptions Subscription[]
+  orders        Order[]
+  payments      Payment[]
+  notifications Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Medicine {
+  id                String    @id @default(cuid())
+  name              String
+  description       String?
+  manufacturer      String
+  price             Float
+  stock             Int
+  dosage            String?
+  manufacturingDate DateTime?
+  expiryDate        DateTime?
+
+  subscriptions Subscription[]
+  orderItems    OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Subscription {
+  id String @id @default(cuid())
+
+  userId     String
+  medicineId String
+
+  frequency Frequency
+
+  quantity Int
+
+  startDate DateTime
+
+  nextRefill DateTime
+
+  status SubscriptionStatus @default(ACTIVE)
+
+  user     User     @relation(fields: [userId], references: [id])
+  medicine Medicine @relation(fields: [medicineId], references: [id])
+  orders   Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  userId          String
+  subscriptionId  String?
+  status          OrderStatus @default(PENDING)
+  totalAmount     Float
+  deliveryAddress String?
+  scheduledDate   DateTime?
+
+  user         User          @relation(fields: [userId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  items        OrderItem[]
+  payment      Payment?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id           String   @id @default(cuid())
+  orderId      String
+  medicineId   String
+  medicineName String
+  quantity     Int
+  unitPrice    Float
+
+  order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  medicine Medicine @relation(fields: [medicineId], references: [id])
+}
+
+model Payment {
+  id         String        @id @default(cuid())
+  orderId    String        @unique
+  userId     String
+  amount     Float
+  method     PaymentMethod @default(CASH)
+  status     PaymentStatus @default(PENDING)
+  retryCount Int           @default(0)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id      String           @id @default(cuid())
+  userId  String
+  title   String
+  message String
+  type    NotificationType @default(GENERAL)
+  isRead  Boolean          @default(false)
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}

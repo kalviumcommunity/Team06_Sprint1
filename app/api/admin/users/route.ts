@@ -1,41 +1,37 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const search = searchParams.get("search") || "";
-
-    const where: any = {
-      role: "USER",
-    };
-
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-      ];
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
     const users = await prisma.user.findMany({
-      where,
-      take: 50,
       orderBy: { createdAt: "desc" },
+      take: 20,
       select: {
         id: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         email: true,
+        phone: true,
+        place: true,
+        gender: true,
         role: true,
         createdAt: true,
+        _count: { select: { subscriptions: true } },
       },
     });
 
-    return NextResponse.json({ success: true, data: users });
+    return NextResponse.json({ success: true, users });
   } catch (error) {
-    console.error("Failed to fetch users:", error);
-    return NextResponse.json(
-      { success: false, error: "Failed to fetch users" },
-      { status: 500 }
-    );
+    console.error("GET /api/admin/users error:", error);
+    return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }

@@ -1,217 +1,244 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
-import { UpcomingDeliveries } from "@/components/dashboard/UpcomingDeliveries";
-import { ActiveSubscriptions } from "@/components/dashboard/ActiveSubscriptions";
-import { RecommendedProducts } from "@/components/dashboard/RecommendedProducts";
-import { RecentOrders } from "@/components/dashboard/RecentOrders";
-import { MoneySavedCard } from "@/components/dashboard/MoneySavedCard";
-import { ReminderCard } from "@/components/dashboard/ReminderCard";
-import { PopularCategories } from "@/components/dashboard/PopularCategories";
-import { Badge } from "@/components/ui/Badge";
-import type {
-  SubscriptionItem,
-  OrderItem,
-  DeliveryItem,
-  ReminderInfo,
-  ProductItem,
-  CategoryItem,
-  StatItem,
-} from "@/types/dashboard";
+import { useEffect, useState } from "react";
+import { useSession, signOut } from "next-auth/react";
+import Link from "next/link";
+import {
+  Activity, Package, Clock, Pill, CalendarDays,
+  LogOut, User, ArrowRight, AlertCircle, Loader2
+} from "lucide-react";
+import ThemeToggle from "@/components/common/ThemeToggle";
 
-const toneClasses: Record<string, string> = {
-  green: "from-[#00b386]/20 to-[#00b386]/5 text-[#00b386] dark:from-[#00b386]/20 dark:to-[#00b386]/10 dark:text-[#00b386]",
-  violet: "from-violet-500/15 to-violet-500/5 text-violet-700 dark:from-violet-500/20 dark:to-violet-500/10 dark:text-violet-300",
-  amber: "from-amber-500/15 to-amber-500/5 text-amber-700 dark:from-amber-500/20 dark:to-amber-500/10 dark:text-amber-300",
-  slate: "from-slate-500/15 to-slate-500/5 text-slate-700 dark:from-slate-500/20 dark:to-slate-500/10 dark:text-slate-300",
-};
+interface Medicine {
+  name: string;
+  price: number;
+}
+
+interface Subscription {
+  id: string;
+  medicineId: string;
+  frequency: string;
+  quantity: number;
+  startDate: string;
+  nextRefill: string;
+  status: "ACTIVE" | "PAUSED" | "CANCELLED";
+  medicine: Medicine;
+}
 
 export default function DashboardPage() {
+  const { data: session } = useSession();
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<StatItem[]>([
-    { title: "Active Subscriptions", value: "0", icon: "💊", tone: "green", status: "Active" },
-    { title: "Upcoming Delivery", value: "0", icon: "📦", tone: "violet", status: "Scheduled" },
-    { title: "Total Orders", value: "0", icon: "🧾", tone: "amber", status: "Fulfilled" },
-  ]);
-  const [subscriptions, setSubscriptions] = useState<SubscriptionItem[]>([]);
-  const [orders, setOrders] = useState<OrderItem[]>([]);
-  const [deliveries, setDeliveries] = useState<DeliveryItem[]>([]);
-  const [rawDeliveriesData, setRawDeliveriesData] = useState<any[]>([]);
-  const [products, setProducts] = useState<ProductItem[]>([]);
-  const [categories, setCategories] = useState<CategoryItem[]>([]);
-  const [reminder, setReminder] = useState<ReminderInfo | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    async function fetchDashboardData() {
+    const fetchData = async () => {
       try {
-        const [summaryRes, subsRes, ordersRes, delivRes, remRes, prodsRes, catsRes] = await Promise.all([
-          fetch("/api/dashboard/summary").then((res) => res.json()).catch(() => null),
-          fetch("/api/dashboard/subscriptions").then((res) => res.json()).catch(() => null),
-          fetch("/api/dashboard/orders").then((res) => res.json()).catch(() => null),
-          fetch("/api/dashboard/deliveries").then((res) => res.json()).catch(() => null),
-          fetch("/api/dashboard/reminder").then((res) => res.json()).catch(() => null),
-          fetch("/api/dashboard/products").then((res) => res.json()).catch(() => null),
-          fetch("/api/dashboard/categories").then((res) => res.json()).catch(() => null),
-        ]);
-
-        if (summaryRes?.success && summaryRes.data) {
-          setStats([
-            { title: "Active Subscriptions", value: String(summaryRes.data.activeSubscriptions ?? 0), icon: "💊", tone: "green", status: "Active" },
-            { title: "Upcoming Delivery", value: String(summaryRes.data.upcomingDeliveries ?? 0), icon: "📦", tone: "violet", status: "Scheduled" },
-            { title: "Total Orders", value: String(summaryRes.data.totalOrders ?? 0), icon: "🧾", tone: "amber", status: "Fulfilled" },
-          ]);
-        }
-
-        if (subsRes?.success && Array.isArray(subsRes.data)) {
-          const mappedSubs: SubscriptionItem[] = subsRes.data.map((item: any) => ({
-            medicine: item.medicine,
-            frequency: item.frequency,
-            nextDelivery: item.nextDelivery
-              ? new Date(item.nextDelivery).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-              : "N/A",
-            status: item.status,
-          }));
-          setSubscriptions(mappedSubs);
-        }
-
-        if (ordersRes?.success && Array.isArray(ordersRes.data)) {
-          const mappedOrders: OrderItem[] = ordersRes.data.map((item: any) => ({
-            orderId: item.orderNumber || item.id,
-            medicine: item.medicine,
-            date: item.createdAt
-              ? new Date(item.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-              : "N/A",
-            amount: `₹${item.amount}`,
-            status: item.status || "Delivered",
-          }));
-          setOrders(mappedOrders);
-        }
-
-        if (delivRes?.success && Array.isArray(delivRes.data)) {
-          setRawDeliveriesData(delivRes.data);
-          const mappedDeliveries: DeliveryItem[] = delivRes.data.map((item: any) => {
-            const delivDate = item.date ? new Date(item.date) : new Date();
-            const daysLeft = Math.max(0, Math.ceil((delivDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
-            return {
-              name: item.name,
-              date: delivDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-              time: "9:00 AM",
-              daysLeft,
-              status: item.status,
-              quantity: item.quantity,
-            };
-          });
-          setDeliveries(mappedDeliveries);
-        }
-
-        if (remRes?.success && remRes.data) {
-          setReminder({
-            medicine: remRes.data.medicine,
-            time: remRes.data.time,
-          });
-        } else {
-          setReminder(null);
-        }
-
-        if (prodsRes?.success && Array.isArray(prodsRes.data)) {
-          setProducts(prodsRes.data);
-        }
-
-        if (catsRes?.success && Array.isArray(catsRes.data)) {
-          setCategories(catsRes.data);
-        }
-      } catch (error) {
-        console.error("Error loading dashboard data:", error);
+        const res = await fetch("/api/subscriptions");
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Failed to load");
+        setSubscriptions(data.subscriptions || []);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to load dashboard data");
       } finally {
         setLoading(false);
       }
-    }
-
-    fetchDashboardData();
+    };
+    fetchData();
   }, []);
 
-  // Compute highlight dates dynamically for current month calendar from real delivery dates
-  const highlightDates = useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+  const active = subscriptions.filter((s) => s.status === "ACTIVE");
+  const upcoming = active
+    .slice()
+    .sort((a, b) => new Date(a.nextRefill).getTime() - new Date(b.nextRefill).getTime())[0];
+  const recent = subscriptions.slice(0, 5);
 
-    return rawDeliveriesData
-      .map((item: any) => {
-        if (!item.date) return null;
-        const d = new Date(item.date);
-        if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
-          return String(d.getDate());
-        }
-        return null;
-      })
-      .filter(Boolean) as string[];
-  }, [rawDeliveriesData]);
-
-  const moneySavedSummary = {
-    amount: "Coming Soon",
-    comparison: "Savings will appear once pricing comparison data becomes available.",
-    percentage: "N/A",
-  };
+  const firstName = session?.user?.name?.split(" ")[0] ?? "User";
 
   return (
-    <DashboardLayout title="Dashboard">
-      <div className="space-y-6">
-        {/* Top Section */}
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
-          <div className="md:col-span-2 xl:col-span-3">
-            <DashboardHeader />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
+      {/* Header */}
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-lg dark:border-slate-800 dark:bg-slate-900/90 shadow-sm">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Pill className="h-6 w-6 text-emerald-600" />
+            <span className="text-lg font-extrabold tracking-tight text-emerald-700 dark:text-emerald-400">
+              PharmaEase
+            </span>
           </div>
-          <div className="xl:row-span-2">
-            <CalendarWidget highlightDates={highlightDates} />
-          </div>
-          {stats.map((item) => (
-            <article
-              key={item.title}
-              className="group flex flex-col rounded-3xl border border-slate-200/80 bg-white p-3 shadow-[0_10px_40px_-20px_rgba(15,23,42,0.35)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-20px_rgba(0,179,134,0.45)] dark:border-slate-800 dark:bg-slate-900"
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition"
             >
-              <div>
-                <div className={`flex h-7 w-7 items-center justify-center rounded-2xl bg-gradient-to-br ${toneClasses[item.tone ?? "slate"]}`}>
-                  <span className="text-xs">{item.icon}</span>
-                </div>
-                <div className="mt-2 flex items-center justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{item.title}</p>
-                    <p className="mt-0.5 text-xl font-semibold text-slate-900 dark:text-white">
-                      {loading ? "..." : item.value}
+              <LogOut size={15} />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Welcome */}
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+            Welcome back, {firstName} 👋
+          </h1>
+          <p className="mt-1 text-slate-500 dark:text-slate-400">
+            Here&apos;s a summary of your medicine subscriptions.
+          </p>
+        </div>
+
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-3">
+            <Loader2 className="h-10 w-10 animate-spin text-emerald-500" />
+            <p className="text-slate-500 dark:text-slate-400">Loading your dashboard…</p>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
+            <AlertCircle className="h-10 w-10 text-red-400" />
+            <p className="text-red-600 dark:text-red-400">{error}</p>
+          </div>
+        ) : (
+          <>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard
+                icon={<Activity className="h-5 w-5 text-emerald-600" />}
+                label="Active Subscriptions"
+                value={active.length}
+                bg="bg-emerald-50 dark:bg-emerald-950/40"
+              />
+              <StatCard
+                icon={<Package className="h-5 w-5 text-blue-600" />}
+                label="Total Subscriptions"
+                value={subscriptions.length}
+                bg="bg-blue-50 dark:bg-blue-950/40"
+              />
+              <StatCard
+                icon={<Clock className="h-5 w-5 text-amber-600" />}
+                label="Paused"
+                value={subscriptions.filter((s) => s.status === "PAUSED").length}
+                bg="bg-amber-50 dark:bg-amber-950/40"
+              />
+              <StatCard
+                icon={<CalendarDays className="h-5 w-5 text-purple-600" />}
+                label="Cancelled"
+                value={subscriptions.filter((s) => s.status === "CANCELLED").length}
+                bg="bg-purple-50 dark:bg-purple-950/40"
+              />
+            </div>
+
+            {/* Upcoming Refill */}
+            {upcoming ? (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-800 dark:bg-emerald-950/30">
+                <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 mb-1">
+                  Next Upcoming Refill
+                </p>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div>
+                    <p className="text-lg font-bold text-slate-900 dark:text-white">
+                      {upcoming.medicine.name}
+                    </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {upcoming.frequency} · Qty {upcoming.quantity}
                     </p>
                   </div>
-                  <Badge tone={item.tone ?? "slate"}>{item.status ?? ""}</Badge>
+                  <div className="text-right">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Refill Date</p>
+                    <p className="font-semibold text-emerald-700 dark:text-emerald-400">
+                      {new Date(upcoming.nextRefill).toLocaleDateString("en-IN", {
+                        day: "numeric", month: "short", year: "numeric"
+                      })}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </article>
-          ))}
-        </div>
+            ) : (
+              <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 text-center text-slate-400 dark:text-slate-500">
+                No upcoming refills. Subscribe to medicines to get started.
+              </div>
+            )}
 
-        {/* Section 3: Upcoming + Active */}
-        <div className="grid gap-6 grid-cols-1 xl:grid-cols-[1.2fr_1fr] md:items-start xl:items-stretch">
-          <UpcomingDeliveries items={deliveries} />
-          <ActiveSubscriptions items={subscriptions} />
-        </div>
+            {/* Recent Subscriptions */}
+            <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-sm">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+                <h2 className="font-semibold text-slate-900 dark:text-white">Recent Subscriptions</h2>
+                <Link href="/subscriptions" className="flex items-center gap-1 text-sm text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">
+                  View All <ArrowRight size={14} />
+                </Link>
+              </div>
+              {recent.length === 0 ? (
+                <div className="px-6 py-12 text-center text-slate-400 dark:text-slate-500">
+                  No subscriptions yet.
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {recent.map((sub) => (
+                    <div key={sub.id} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                      <div>
+                        <p className="font-medium text-slate-900 dark:text-white">{sub.medicine.name}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{sub.frequency} · Qty {sub.quantity}</p>
+                      </div>
+                      <StatusBadge status={sub.status} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-        {/* Section 4: Recent Orders + Recommended */}
-        <div className="grid gap-6 grid-cols-1 xl:grid-cols-[1.2fr_1fr] md:items-start xl:items-stretch">
-          <RecentOrders items={orders} />
-          <RecommendedProducts items={products} />
-        </div>
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <QuickAction href="/medicines" icon={<Pill className="h-5 w-5" />} label="New Subscription" color="bg-emerald-600 hover:bg-emerald-700" />
+              <QuickAction href="/subscriptions" icon={<Package className="h-5 w-5" />} label="My Subscriptions" color="bg-blue-600 hover:bg-blue-700" />
+              <QuickAction href="/profile" icon={<User className="h-5 w-5" />} label="My Profile" color="bg-purple-600 hover:bg-purple-700" />
+            </div>
+          </>
+        )}
+      </main>
+    </div>
+  );
+}
 
-        {/* Section 5: Money Saved + Reminder */}
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-2 md:items-start xl:items-stretch">
-          <MoneySavedCard summary={moneySavedSummary} />
-          <ReminderCard reminder={reminder} />
-        </div>
+function StatCard({
+  icon, label, value, bg
+}: {
+  icon: React.ReactNode; label: string; value: number; bg: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 shadow-sm">
+      <div className={`inline-flex rounded-xl p-2 ${bg} mb-3`}>{icon}</div>
+      <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
+      <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{label}</p>
+    </div>
+  );
+}
 
-        {/* Section 6: Popular Categories */}
-        <PopularCategories items={categories} />
-      </div>
-    </DashboardLayout>
+function StatusBadge({ status }: { status: string }) {
+  const classes =
+    status === "ACTIVE"
+      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+      : status === "PAUSED"
+      ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+      : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+  return (
+    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${classes}`}>
+      {status}
+    </span>
+  );
+}
+
+function QuickAction({ href, icon, label, color }: {
+  href: string; icon: React.ReactNode; label: string; color: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center justify-center gap-2 rounded-2xl px-5 py-4 text-sm font-semibold text-white shadow-sm transition ${color}`}
+    >
+      {icon}
+      {label}
+    </Link>
   );
 }
